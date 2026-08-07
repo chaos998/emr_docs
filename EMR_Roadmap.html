@@ -1,0 +1,2162 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EMR Development Roadmap</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      window.mermaid = mermaid;
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "base",
+        securityLevel: "loose",
+      });
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f5f8;
+        --panel: #ffffff;
+        --ink: #1d242d;
+        --muted: #647181;
+        --line: #d9dee6;
+        --soft: #eef2f6;
+        --blue: #1769aa;
+        --green: #16735f;
+        --red: #b33a3a;
+        --yellow: #8a6400;
+        --violet: #6546a3;
+        --shadow: 0 14px 34px rgba(28, 38, 48, 0.07);
+        --shadow-soft: 0 8px 18px rgba(28, 38, 48, 0.05);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+        line-height: 1.55;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 96px minmax(0, 1fr);
+      }
+
+      .primary-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 96px;
+        height: 100vh;
+        background: #0f7fe5;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 10px 0 24px rgba(15, 127, 229, 0.16);
+        z-index: 20;
+      }
+
+      .side-title {
+        padding: 24px 10px 12px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0;
+        color: rgba(255, 255, 255, 0.86);
+      }
+
+      .workspace {
+        grid-column: 2;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        background: #f5f6fa;
+      }
+
+      .secondary-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: auto;
+        background: #fff;
+        border-right: 1px solid #e7ebf1;
+        min-height: 100vh;
+        padding: 18px 10px;
+      }
+
+      .secondary-group {
+        margin-bottom: 22px;
+      }
+
+      .secondary-label {
+        padding: 0 10px 8px;
+        color: #9aa5b3;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(10px);
+      }
+
+      .topbar {
+        max-width: none;
+        margin: 0;
+        padding: 12px 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .brand p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex-wrap: nowrap;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        border-radius: 0;
+      }
+
+      button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ink);
+        height: 36px;
+        padding: 0 11px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      button.active {
+        border-color: #d5e8fb;
+        color: #0f6fc7;
+        background: #eaf5ff;
+      }
+
+      .tabs button {
+        width: 100%;
+        color: #536170;
+        text-align: left;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .tabs button::after {
+        content: "";
+        width: 3px;
+        height: 18px;
+        border-radius: 999px;
+        background: transparent;
+      }
+
+      .tabs button.active::after {
+        background: #0f7fe5;
+      }
+
+      main {
+        max-width: none;
+        margin: 0;
+        padding: 22px 26px 60px;
+      }
+
+      .content-frame {
+        min-width: 0;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 18px;
+        align-items: stretch;
+        margin-bottom: 18px;
+      }
+
+      .hero-main {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 22px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-main::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 5px;
+        background: linear-gradient(
+          90deg,
+          var(--blue),
+          var(--green),
+          var(--violet),
+          var(--red)
+        );
+      }
+
+      .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid #cfe0ee;
+        background: #eef6fb;
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+
+      .hero-main h2 {
+        margin: 0 0 8px;
+        font-size: 30px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .hero-main p {
+        margin: 0;
+        max-width: 920px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .hero-side {
+        border: 1px solid var(--line);
+        background: #17202b;
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+        align-content: center;
+      }
+
+      .hero-side strong {
+        display: block;
+        font-size: 13px;
+        color: #b9c6d5;
+        margin-bottom: 4px;
+      }
+
+      .hero-side span {
+        display: block;
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .panel.pad {
+        padding: 20px;
+      }
+      .panel h2,
+      .panel h3 {
+        margin: 0 0 12px;
+        letter-spacing: 0;
+      }
+      .panel h2 {
+        font-size: 20px;
+      }
+      .panel h3 {
+        font-size: 17px;
+      }
+      .panel p {
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .metric {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        min-height: 96px;
+        box-shadow: var(--shadow-soft);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .metric::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #ccd7e3;
+      }
+
+      .metric:nth-child(1)::before {
+        background: var(--blue);
+      }
+      .metric:nth-child(2)::before {
+        background: var(--green);
+      }
+      .metric:nth-child(3)::before {
+        background: var(--violet);
+      }
+      .metric:nth-child(4)::before {
+        background: var(--red);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 28px;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .phase-list {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .phase {
+        border: 1px solid var(--line);
+        background: #fbfcfd;
+        border-radius: 8px;
+        padding: 13px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .phase b {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .phase small {
+        display: block;
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid var(--line);
+        background: var(--soft);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .badge.mvp {
+        background: #eaf5f2;
+        color: var(--green);
+        border-color: #beddd4;
+      }
+      .badge.link {
+        background: #eaf1f8;
+        color: var(--blue);
+        border-color: #c2d7e9;
+      }
+      .badge.risk {
+        background: #fff3d1;
+        color: var(--yellow);
+        border-color: #ead28b;
+      }
+      .badge.later {
+        background: #f8eeee;
+        color: var(--red);
+        border-color: #e8c3c3;
+      }
+      .badge.claim {
+        background: #f2eef8;
+        color: #5b4384;
+        border-color: #d9caec;
+      }
+      .badge.report {
+        background: #f8eeee;
+        color: var(--red);
+        border-color: #e8c3c3;
+      }
+      .badge.base {
+        background: #eaf1f8;
+        color: var(--blue);
+        border-color: #c2d7e9;
+      }
+      .badge.gate {
+        background: #1d242d;
+        color: #fff;
+        border-color: #1d242d;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 9px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #344151;
+        background: #f5f8fb;
+        font-size: 13px;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .mermaid-box {
+        overflow: auto;
+        padding: 16px;
+        background: #fbfcfe;
+        border: 1px solid #edf1f5;
+        border-radius: 8px;
+      }
+
+      .timeline-wrap {
+        padding: 8px 0 4px;
+      }
+
+      #milestoneTimeline {
+        height: 470px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .vis-timeline {
+        border: 0;
+        font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      }
+
+      .vis-item {
+        border-radius: 7px;
+        border-width: 1px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .vis-item.base {
+        background: #eaf1f8;
+        border-color: #8bb8dc;
+        color: #17496d;
+      }
+      .vis-item.mvp {
+        background: #eaf5f2;
+        border-color: #7fc0ad;
+        color: #135b4b;
+      }
+      .vis-item.integration {
+        background: #fff3d1;
+        border-color: #d6b95c;
+        color: #765500;
+      }
+      .vis-item.claim {
+        background: #f2eef8;
+        border-color: #b8a2d6;
+        color: #5b4384;
+      }
+      .vis-item.report {
+        background: #f8eeee;
+        border-color: #d79b9b;
+        color: #8a3030;
+      }
+      .vis-item.gate {
+        background: #1d242d;
+        border-color: #1d242d;
+        color: #fff;
+      }
+
+      .milestone-cards {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .month-card {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 8px;
+        padding: 14px;
+        min-height: 240px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .month-card h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+
+      .month-card .range {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .month-card ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+
+      .month-card li {
+        margin-bottom: 7px;
+        color: #2f3b49;
+        font-size: 13px;
+      }
+
+      .gate-list {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .gate-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: var(--panel);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .gate-card b {
+        display: block;
+        margin: 8px 0 5px;
+      }
+
+      .gate-card small {
+        color: var(--muted);
+      }
+
+      .sprint-board {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .sprint-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 14px;
+        min-height: 220px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .sprint-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .sprint-card h3 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .sprint-card .date {
+        color: var(--muted);
+        font-size: 12px;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .sprint-card dl {
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .sprint-card dt {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 800;
+        margin: 0 0 2px;
+      }
+
+      .sprint-card dd {
+        margin: 0;
+        color: #2f3b49;
+        font-size: 13px;
+      }
+
+      .docs-layout {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .doc-list {
+        position: sticky;
+        top: 86px;
+        max-height: calc(100vh - 110px);
+        overflow: auto;
+        padding: 10px;
+      }
+
+      .doc-list button {
+        width: 100%;
+        height: auto;
+        min-height: 38px;
+        margin-bottom: 7px;
+        text-align: left;
+        line-height: 1.35;
+        white-space: normal;
+        background: #f8fafc;
+        border-color: var(--line);
+      }
+
+      .doc-list button.active {
+        background: var(--blue);
+        color: #fff;
+        border-color: var(--blue);
+      }
+
+      .doc-toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .doc-toolbar strong {
+        font-size: 16px;
+      }
+      .doc-toolbar a {
+        color: var(--blue);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .markdown {
+        padding: 22px 28px 34px;
+        overflow-wrap: anywhere;
+      }
+
+      .markdown h1 {
+        margin-top: 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 28px;
+      }
+
+      .markdown h2 {
+        margin-top: 30px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #edf0f4;
+        font-size: 22px;
+      }
+
+      .markdown h3 {
+        margin-top: 22px;
+        font-size: 18px;
+      }
+      .markdown p,
+      .markdown li {
+        color: #26313d;
+      }
+      .markdown code {
+        background: #eef2f6;
+        padding: 2px 5px;
+        border-radius: 5px;
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      .markdown pre {
+        overflow: auto;
+        background: #111827;
+        color: #e5e7eb;
+        padding: 14px;
+        border-radius: 8px;
+      }
+
+      .markdown pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+      }
+
+      .markdown table {
+        margin: 14px 0 22px;
+      }
+      .markdown blockquote {
+        border-left: 4px solid var(--blue);
+        margin: 16px 0;
+        padding: 8px 14px;
+        background: #f4f8fb;
+        color: #334155;
+      }
+
+      .empty {
+        padding: 48px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+        .primary-sidebar {
+          position: static;
+          width: auto;
+          height: auto;
+          flex-direction: row;
+          align-items: center;
+          padding: 8px 12px;
+        }
+        .side-title {
+          padding: 0;
+          text-align: left;
+        }
+        .secondary-sidebar {
+          position: static;
+          height: auto;
+          min-height: auto;
+          border-right: 0;
+          border-bottom: 1px solid #e7ebf1;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .grid,
+        .docs-layout,
+        .summary,
+        .hero {
+          grid-template-columns: 1fr;
+        }
+        .phase-list {
+          grid-template-columns: 1fr;
+        }
+        .milestone-cards,
+        .gate-list,
+        .sprint-board {
+          grid-template-columns: 1fr;
+        }
+        .doc-list {
+          position: static;
+          max-height: none;
+        }
+        main {
+          padding: 14px 12px 40px;
+        }
+        .markdown {
+          padding: 18px 16px 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="primary-sidebar">
+        <div>
+          <div class="side-title">EMR<br />Docs</div>
+        </div>
+        <div class="side-title">v1.0</div>
+      </aside>
+
+      <div class="workspace">
+        <aside class="secondary-sidebar">
+          <div class="secondary-group">
+            <div class="secondary-label">PROJECT</div>
+            <nav class="tabs" aria-label="화면 전환">
+              <button class="tab active" data-view="roadmap">로드맵</button>
+              <button class="tab" data-view="milestone">마일스톤</button>
+              <button class="tab" data-view="docs">문서 보기</button>
+            </nav>
+          </div>
+          <div class="secondary-group">
+            <div class="secondary-label">SCOPE</div>
+            <div class="phase">
+              <span class="badge mvp">MVP</span><b>3개월</b
+              ><small>기본 운영</small>
+            </div>
+            <div class="phase" style="margin-top: 8px">
+              <span class="badge link">EXT</span><b>2개월</b
+              ><small>청구/보고</small>
+            </div>
+          </div>
+        </aside>
+
+        <div class="content-frame">
+          <header>
+            <div class="topbar">
+              <div class="brand">
+                <h1>EMR Development Roadmap</h1>
+                <p>
+                  피부/성형외과 EMR 개발 순서, 마일스톤, 도메인 문서 웹 뷰어
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <main>
+            <section id="roadmap" class="view active">
+              <!-- <div class="hero">
+        <section class="hero-main">
+          <span class="hero-kicker">5개월 구축 로드맵</span>
+          <h2>접수부터 청구/보고까지, EMR 개발 순서를 업무 의존성 기준으로 관리한다</h2>
+          <p>기준정보를 먼저 고정하고 환자, 접수, 진료, 계산, 수납을 MVP로 안정화한 뒤 DUR, SAM 청구, NIMS, 비급여 보고를 확장하는 일정이다.</p>
+        </section>
+        <aside class="hero-side">
+          <div><strong>MVP 목표</strong><span>3개월 내 기본 운영 가능</span></div>
+          <div><strong>확장 목표</strong><span>2개월 내 외부연동 검수</span></div>
+        </aside>
+      </div>
+      <div class="summary">
+        <div class="metric"><strong>12</strong><span>핵심 개발 단계</span></div>
+        <div class="metric"><strong>5개월</strong><span>컨설팅/개발관리 기준 로드맵</span></div>
+        <div class="metric"><strong>3개월</strong><span>MVP 안정화 목표</span></div>
+        <div class="metric"><strong>2개월</strong><span>청구/NIMS/보고 확장</span></div>
+      </div> -->
+
+              <section class="panel pad">
+                <h2>단계별 범위</h2>
+                <!-- <p>
+                  MVP는 병원 하루 업무가 실제로 돌아가는 범위이고, 외부연동은
+                  안정화 후 붙이는 확장 범위이다.
+                </p> -->
+                <div class="phase-list">
+                  <div class="phase">
+                    <span class="badge mvp">MVP</span><b>기초코드/병원설정</b
+                    ><small
+                      >공통 코드, 병원 연동값, 처방 마스터, 적용일자</small
+                    >
+                  </div>
+                  <div class="phase">
+                    <span class="badge mvp">MVP</span><b>환자/접수</b
+                    ><small
+                      >환자 식별, 고객정보, 접수, 대기, 보험자격 연결</small
+                    >
+                  </div>
+                  <div class="phase">
+                    <span class="badge mvp">MVP</span><b>진료/처방</b
+                    ><small>상병, 처방 라인, 묶음처방, 처방전 데이터</small>
+                  </div>
+                  <div class="phase">
+                    <span class="badge mvp">MVP</span><b>계산/수납</b
+                    ><small>본인부담, 영수증, 결제, 환불, 미수, 마감</small>
+                  </div>
+                  <div class="phase">
+                    <span class="badge link">연동</span><b>수진자조회/DUR</b
+                    ><small>보험자격 조회, 약제 점검, 취소, 결과 저장</small>
+                  </div>
+                  <div class="phase">
+                    <span class="badge claim">청구</span><b>SAM 청구/결과</b
+                    ><small
+                      >건강보험/의료급여 IN 생성, OUT 수신, 심사결과</small
+                    >
+                  </div>
+                  <div class="phase">
+                    <span class="badge report">보고</span><b>NIMS/마약류</b
+                    ><small
+                      >구매, 투약, 조제, 저장소, 제품/일련번호, 결과</small
+                    >
+                  </div>
+                  <div class="phase">
+                    <span class="badge later">후속</span><b>비급여 보고/통계</b
+                    ><small>비급여 항목, 보고 자료, 매출/CRM/운영 지표</small>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel pad" style="margin-top: 18px">
+                <h2>개발 의존성</h2>
+                <p>
+                  업무 화면 순서가 아니라 데이터가 확정되어야 하는 순서
+                  기준이다.
+                </p>
+                <div class="mermaid-box">
+                  <pre class="mermaid">
+flowchart LR
+    classDef base fill:#eaf1f8,stroke:#7fb1d8,color:#17496d,stroke-width:1px
+    classDef core fill:#eaf5f2,stroke:#7fc0ad,color:#135b4b,stroke-width:1px
+    classDef money fill:#fff3d1,stroke:#d6b95c,color:#765500,stroke-width:1px
+    classDef ext fill:#f2eef8,stroke:#b8a2d6,color:#5b4384,stroke-width:1px
+    classDef report fill:#f8eeee,stroke:#d79b9b,color:#8a3030,stroke-width:1px
+
+    subgraph FOUNDATION["기준 기반"]
+      A["기초코드"]
+      B["병원/사용자 설정"]
+      C["처방 마스터"]
+    end
+
+    subgraph FRONT["환자 유입"]
+      D["환자/고객"]
+      E["접수/대기"]
+      F["보험자격"]
+    end
+
+    subgraph CLINIC["진료"]
+      G["진료 생성"]
+      H["상병"]
+      I["처방/시술/재료"]
+    end
+
+    subgraph SETTLE["계산/수납"]
+      J["진료비 계산"]
+      K["출력물"]
+      L["수납/마감"]
+    end
+
+    subgraph EXTERNAL["외부연동/보고"]
+      M["DUR/의료쇼핑"]
+      N["SAM 청구"]
+      O["청구/심사결과"]
+      P["NIMS"]
+      Q["비급여 보고"]
+    end
+
+    A --> D
+    B --> E
+    C --> I
+    D --> E --> G
+    E --> F --> J
+    G --> H --> I --> J
+    I --> M
+    J --> K
+    J --> L
+    L --> N --> O
+    I --> P
+    L --> Q
+
+    class A,B,C base
+    class D,E,F,G,H,I core
+    class J,K,L money
+    class M,N,O ext
+    class P,Q report</pre
+                  >
+                </div>
+              </section>
+
+              <section class="panel pad" style="margin-top: 18px">
+                <h2>MVP와 확장 분리</h2>
+                <div class="mermaid-box">
+                  <pre class="mermaid">
+flowchart LR
+    classDef mvp fill:#eaf5f2,stroke:#7fc0ad,color:#135b4b,stroke-width:1px
+    classDef bridge fill:#fff3d1,stroke:#d6b95c,color:#765500,stroke-width:1px
+    classDef claim fill:#f2eef8,stroke:#b8a2d6,color:#5b4384,stroke-width:1px
+    classDef report fill:#f8eeee,stroke:#d79b9b,color:#8a3030,stroke-width:1px
+
+    subgraph M1["MVP 운영"]
+      A["기준정보"]
+      B["환자/접수"]
+      C["진료/처방"]
+      D["계산/출력"]
+      E["수납/마감"]
+    end
+
+    subgraph B1["연동 준비"]
+      F["자격조회"]
+      G["DUR"]
+      H["청구 근거 고정"]
+    end
+
+    subgraph C1["보험청구"]
+      I["SAM IN"]
+      J["SAM OUT"]
+      K["보완/누락/재청구"]
+    end
+
+    subgraph R1["신고/보고"]
+      L["NIMS"]
+      M["비급여 보고"]
+      N["운영 통계"]
+    end
+
+    A --> B --> C --> D --> E
+    B -. 보험진료 .-> F
+    C -. 약 처방 .-> G
+    D --> H
+    E --> I --> J --> K
+    C --> L
+    E --> M
+    E --> N
+
+    class A,B,C,D,E mvp
+    class F,G,H bridge
+    class I,J,K claim
+    class L,M,N report</pre
+                  >
+                </div>
+              </section>
+            </section>
+
+            <section id="milestone" class="view">
+              <div class="panel pad">
+                <h2>5개월 마일스톤</h2>
+                <!-- <p>
+                  2026-08-10 시작 기준의 컨설팅/개발관리용 로드맵이다. 주요
+                  구간은 타임라인에서 클릭해 확인하고, 월별 산출물은 아래 카드로
+                  관리한다.
+                </p> -->
+                <div class="timeline-wrap">
+                  <div id="milestoneTimeline"></div>
+                </div>
+              </div>
+
+              <div class="milestone-cards">
+                <section class="month-card">
+                  <span class="badge base">Month 1</span>
+                  <h3>기초/접수 기반</h3>
+                  <span class="range">2026-08-10 ~ 2026-09-04</span>
+                  <ul>
+                    <li>병원설정, 공통코드, 사용자/진료실</li>
+                    <li>처방 마스터 공통 구조와 적용일자</li>
+                    <li>환자/고객관리, 보험이력, 접수/대기</li>
+                    <li>수진자조회 결과 저장과 접수 연결</li>
+                  </ul>
+                </section>
+                <section class="month-card">
+                  <span class="badge mvp">Month 2</span>
+                  <h3>진료/처방 완성</h3>
+                  <span class="range">2026-09-07 ~ 2026-10-02</span>
+                  <ul>
+                    <li>진료 생성, 상병, 특정기호</li>
+                    <li>수가/약품/재료/묶음처방 입력</li>
+                    <li>진료일 기준 급여/비급여/단가 판정</li>
+                    <li>DUR 대상 추출과 의료쇼핑 대상 식별</li>
+                  </ul>
+                </section>
+                <section class="month-card">
+                  <span class="badge mvp">Month 3</span>
+                  <h3>계산/수납 MVP</h3>
+                  <span class="range">2026-10-05 ~ 2026-10-30</span>
+                  <ul>
+                    <li>본인부담, 산정특례, 지원금 계산</li>
+                    <li>수납대기, 결제, 환불, 미수, 마감</li>
+                    <li>처방전, 영수증, 세부산정내역, 제증명</li>
+                    <li>MVP 통합 시나리오 검수</li>
+                  </ul>
+                </section>
+                <section class="month-card">
+                  <span class="badge claim">Month 4</span>
+                  <h3>보험청구/DUR</h3>
+                  <span class="range">2026-11-02 ~ 2026-11-27</span>
+                  <ul>
+                    <li>DUR 요청/결과/취소와 특정내역 반영</li>
+                    <li>SAM IN 건강보험/의료급여 분리 생성</li>
+                    <li>접수/반송, 심사결과 OUT 수신</li>
+                    <li>보완, 누락, 추가, 재청구 구분</li>
+                  </ul>
+                </section>
+                <section class="month-card">
+                  <span class="badge report">Month 5</span>
+                  <h3>NIMS/보고/운영</h3>
+                  <span class="range">2026-11-30 ~ 2027-01-08</span>
+                  <ul>
+                    <li>NIMS 기준정보, 구매, 투약, 조제 신고</li>
+                    <li>전송 결과, 취소, 변경, 재고/일련번호</li>
+                    <li>비급여 보고 대상 추출과 자료 검증</li>
+                    <li>운영 리허설, 권한/로그/감사 체크</li>
+                  </ul>
+                </section>
+              </div>
+
+              <div class="gate-list">
+                <section class="gate-card">
+                  <span class="badge gate">Gate 1</span>
+                  <b>기준정보 승인</b>
+                  <small
+                    >코드/병원설정/처방마스터가 접수와 진료에서 재사용 가능해야
+                    한다.</small
+                  >
+                </section>
+                <section class="gate-card">
+                  <span class="badge gate">Gate 2</span>
+                  <b>진료 MVP 승인</b>
+                  <small
+                    >접수부터 진료 저장까지 당시 보험/처방/단가 스냅샷이 남아야
+                    한다.</small
+                  >
+                </section>
+                <section class="gate-card">
+                  <span class="badge gate">Gate 3</span>
+                  <b>수납 MVP 승인</b>
+                  <small
+                    >계산, 출력, 결제, 환불, 미수, 마감이 하나의 흐름으로
+                    검증되어야 한다.</small
+                  >
+                </section>
+                <section class="gate-card">
+                  <span class="badge gate">Gate 4</span>
+                  <b>외부연동 승인</b>
+                  <small
+                    >DUR, SAM, NIMS, 비급여 보고가 원진료 데이터와 매칭되어야
+                    한다.</small
+                  >
+                </section>
+              </div>
+
+              <section class="panel pad" style="margin-top: 18px">
+                <h2>주간 스프린트 상세</h2>
+                <!-- <p>
+                  각 주차는 개발팀 데일리 체크와 금요일 검수 기준으로 사용한다.
+                  기간은 2026-08-10 시작 기준이며, 병원 정책 확정이나 외부기관
+                  테스트 일정에 따라 순서는 조정할 수 있다.
+                </p> -->
+                <div class="sprint-board">
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 1. 병원/공통코드</h3>
+                      <span class="badge base">기반</span>
+                    </div>
+                    <span class="date">2026-08-10 ~ 2026-08-14</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        요양기관 설정, 공통 코드그룹, 사용자/진료실, 권한 기초
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>접수/진료/청구가 참조할 코드값을 저장/조회 가능</dd>
+                      <dt>체크</dt>
+                      <dd>코드 비활성화, 병원 DUR/SAM/NIMS 설정 필드</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 2. 처방 기준코드</h3>
+                      <span class="badge base">기반</span>
+                    </div>
+                    <span class="date">2026-08-17 ~ 2026-08-21</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        상병, 수가, 약품, 재료, 원료약, 자체약, 적용일자 공통
+                        구조
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>진료일 기준 유효 코드/단가/급여구분 선택 가능</dd>
+                      <dt>체크</dt>
+                      <dd>마스터와 병원 사용자코드 분리, 과거 적용일 보존</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 3. 환자/고객관리</h3>
+                      <span class="badge base">기반</span>
+                    </div>
+                    <span class="date">2026-08-24 ~ 2026-08-28</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        환자 식별, 연락처, 주소, 고객관리, 마케팅 동의, 중복
+                        환자 방지
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>신규/기존 환자를 안정적으로 검색하고 접수로 연결</dd>
+                      <dt>체크</dt>
+                      <dd>주민번호/생년월일/성별, 민감정보 접근 로그</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 4. 접수/보험자격</h3>
+                      <span class="badge base">Gate 1</span>
+                    </div>
+                    <span class="date">2026-08-31 ~ 2026-09-04</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>접수 생성, 대기열, 보험이력, 수진자조회 결과 반영</dd>
+                      <dt>완료 기준</dt>
+                      <dd>접수 후 진료실에 환자/보험/담당의 기준 전달</dd>
+                      <dt>체크</dt>
+                      <dd>의료급여 본인부담, 산정특례, 자격제한 메시지</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 5. 진료 헤더/상병</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-09-07 ~ 2026-09-11</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>진료 생성, 담당의/진료실/보험구분, 주상병/부상병</dd>
+                      <dt>완료 기준</dt>
+                      <dd>
+                        진료 저장 시 상병과 보험 기준이 명세서 근거로 남음
+                      </dd>
+                      <dt>체크</dt>
+                      <dd>주상병 필수, 중복 상병, 산정특례 자동 연결</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 6. 처방 라인</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-09-14 ~ 2026-09-18</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        수가/약품/재료 입력, 항/목, 수량/횟수/일수, 원내외
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>처방 추가 시 당시 코드/명칭/단가/급여 스냅샷 저장</dd>
+                      <dt>체크</dt>
+                      <dd>원내 주사 예외코드, 처방전 출력 대상</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 7. 묶음/반복처방</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-09-21 ~ 2026-09-25</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>묶음처방, 포함 상병/처방 확장, 과거 진료 복사</dd>
+                      <dt>완료 기준</dt>
+                      <dd>부모/자식 관계 유지, 현재 진료일 기준 재판정</dd>
+                      <dt>체크</dt>
+                      <dd>패키지 비급여 금액, 자식 금액 0/수납 제외</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 8. 진료 저장 검수</h3>
+                      <span class="badge mvp">Gate 2</span>
+                    </div>
+                    <span class="date">2026-09-28 ~ 2026-10-02</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>진료 상태 전환, 의료급여 승인, DUR 대상 추출 준비</dd>
+                      <dt>완료 기준</dt>
+                      <dd>접수부터 진료 저장까지 업무 시나리오 통과</dd>
+                      <dt>체크</dt>
+                      <dd>수진자조회/보험 변경 후 재계산 트리거</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 9. 본인부담 계산</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-10-05 ~ 2026-10-09</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>건강보험, 의료급여, 일반, 산정특례, 지원금 계산</dd>
+                      <dt>완료 기준</dt>
+                      <dd>명세서/처방 라인 금액과 환자부담 산출</dd>
+                      <dt>체크</dt>
+                      <dd>65세 이상, 100/100, 본인부담률 코드</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 10. 수납/환불</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-10-12 ~ 2026-10-16</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        수납대기, 결제수단, 복합결제, 부분수납, 환불, 미수
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>진료 완료 후 수납과 잔액 상태가 일관되게 전환</dd>
+                      <dt>체크</dt>
+                      <dd>영수증 금액, 카드/현금 분리, 취소 이력</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 11. 출력물</h3>
+                      <span class="badge mvp">MVP</span>
+                    </div>
+                    <span class="date">2026-10-19 ~ 2026-10-23</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        처방전, 영수증, 세부산정내역, 진단서/확인서, 발급번호
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>진료/수납 상태별 출력 가능 문서가 분리됨</dd>
+                      <dt>체크</dt>
+                      <dd>재출력, 수정발급, 직인, 영문 병원정보</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 12. MVP 통합검수</h3>
+                      <span class="badge mvp">Gate 3</span>
+                    </div>
+                    <span class="date">2026-10-26 ~ 2026-10-30</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>접수-진료-계산-출력-수납-마감 통합 시나리오</dd>
+                      <dt>완료 기준</dt>
+                      <dd>비급여 중심 병원 운영 MVP를 데모 가능</dd>
+                      <dt>체크</dt>
+                      <dd>마감 후 수정 제한, 재계산/환불 영향</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 13. DUR 요청</h3>
+                      <span class="badge link">연동</span>
+                    </div>
+                    <span class="date">2026-11-02 ~ 2026-11-06</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        DUR 대상 약제 추출, 원내/원외 분리, 요청 전문 필드
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>약품 처방 시 DUR 요청 생성 가능</dd>
+                      <dt>체크</dt>
+                      <dd>주성분코드 9자리, 처방조제유형, 승인번호</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 14. DUR 결과/의료쇼핑</h3>
+                      <span class="badge link">연동</span>
+                    </div>
+                    <span class="date">2026-11-09 ~ 2026-11-13</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        결과 저장, 절대금기, 특정내역, 취소, 의료쇼핑 방지
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>DUR 결과가 진료와 청구 근거에 반영</dd>
+                      <dt>체크</dt>
+                      <dd>JT/MT 특정내역, PRN 사유, 취소 사유</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 15. SAM IN</h3>
+                      <span class="badge claim">청구</span>
+                    </div>
+                    <span class="date">2026-11-16 ~ 2026-11-20</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        청구서, 명세서, 상병, 진료내역, 처방전, 특정내역 생성
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>건강보험/의료급여 SAM 파일 분리 생성</dd>
+                      <dt>체크</dt>
+                      <dd>고정폭, 명세서 병합, 보완/누락 청구구분</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 16. SAM OUT</h3>
+                      <span class="badge claim">Gate 4</span>
+                    </div>
+                    <span class="date">2026-11-23 ~ 2026-11-27</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        접수/반송, 심사결과, 조정/삭감, 원외처방 결과 수신
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>수신문서가 원청구와 진료 상태에 매칭</dd>
+                      <dt>체크</dt>
+                      <dd>접수번호, 명세서 일련번호, 줄번호, 사유코드</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 17. NIMS 기준정보</h3>
+                      <span class="badge report">보고</span>
+                    </div>
+                    <span class="date">2026-11-30 ~ 2026-12-04</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>거래처, 저장소, 제품, 재고, 일련번호, 바코드 입력</dd>
+                      <dt>완료 기준</dt>
+                      <dd>마약류 처방/구매가 NIMS 기준정보와 연결</dd>
+                      <dt>체크</dt>
+                      <dd>제품코드, 제조번호, 유효기간, 저장소</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 18. NIMS 구매보고</h3>
+                      <span class="badge report">보고</span>
+                    </div>
+                    <span class="date">2026-12-07 ~ 2026-12-11</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>구매보고 헤더/상세, 거래처, 수량, 금액, 전송결과</dd>
+                      <dt>완료 기준</dt>
+                      <dd>구매 내역을 신고하고 결과를 저장</dd>
+                      <dt>체크</dt>
+                      <dd>보고구분, 취소/변경, 재고 증가</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 19. NIMS 투약/조제</h3>
+                      <span class="badge report">보고</span>
+                    </div>
+                    <span class="date">2026-12-14 ~ 2026-12-18</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        진료 처방 기반 투약/조제 보고, 환자 식별, 수량 계산
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>마약류 처방 완료 후 신고 대상 자동 추출</dd>
+                      <dt>체크</dt>
+                      <dd>주민번호 대체 식별, 일련번호, 재고 차감</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 20. 비급여 보고</h3>
+                      <span class="badge report">보고</span>
+                    </div>
+                    <span class="date">2026-12-21 ~ 2026-12-25</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>비급여 보고 대상 코드, 가격, 진료 실적, 자료 추출</dd>
+                      <dt>완료 기준</dt>
+                      <dd>연간 보고용 대상 항목과 금액 검증 가능</dd>
+                      <dt>체크</dt>
+                      <dd>비급여 보고 플래그, 패키지/할인 금액 기준</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 21. 운영/권한/로그</h3>
+                      <span class="badge report">운영</span>
+                    </div>
+                    <span class="date">2026-12-28 ~ 2027-01-01</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        권한, 감사 로그, 개인정보 접근, 마감 후 수정, 백업
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>운영 리스크가 큰 행위의 추적과 제한 가능</dd>
+                      <dt>체크</dt>
+                      <dd>주민번호/사진/동의서 접근, 삭제/수정 이력</dd>
+                    </dl>
+                  </article>
+                  <article class="sprint-card">
+                    <div class="sprint-head">
+                      <h3>Week 22. 최종 리허설</h3>
+                      <span class="badge gate">Final</span>
+                    </div>
+                    <span class="date">2027-01-04 ~ 2027-01-08</span>
+                    <dl>
+                      <dt>범위</dt>
+                      <dd>
+                        오픈 리허설, 장애 케이스, 데이터 이관/초기 설정, 사용자
+                        교육
+                      </dd>
+                      <dt>완료 기준</dt>
+                      <dd>실제 병원 하루 업무를 샘플 데이터로 끝까지 수행</dd>
+                      <dt>체크</dt>
+                      <dd>접수-진료-수납-청구-보고 전체 회귀 테스트</dd>
+                    </dl>
+                  </article>
+                </div>
+              </section>
+
+              <div class="grid" style="margin-top: 18px">
+                <section class="panel pad">
+                  <h2>일별 확인 루프</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>확인 항목</th>
+                        <th>질문</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>오늘 범위</td>
+                        <td>어떤 도메인의 어떤 저장 필드/규칙을 구현했는가</td>
+                      </tr>
+                      <tr>
+                        <td>입력/저장</td>
+                        <td>화면 입력값과 DB 저장값이 분리되어 있는가</td>
+                      </tr>
+                      <tr>
+                        <td>적용일</td>
+                        <td>진료일 기준으로 마스터 값을 선택하는가</td>
+                      </tr>
+                      <tr>
+                        <td>발생 스냅샷</td>
+                        <td>처방/금액/보험/청구 근거가 당시 값으로 남는가</td>
+                      </tr>
+                      <tr>
+                        <td>외부 연동</td>
+                        <td>
+                          수진자조회, DUR, SAM, NIMS 중 영향 범위가 있는가
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>테스트</td>
+                        <td>정상, 예외, 취소, 재계산 케이스가 있는가</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
+
+                <section class="panel pad">
+                  <h2>상태 기준</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>상태</th>
+                        <th>뜻</th>
+                        <th>진척 판단</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="badge">준비</span></td>
+                        <td>필드/규칙 정의 중</td>
+                        <td>화면 개발 전</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge link">진행</span></td>
+                        <td>저장/조회/계산 구현 중</td>
+                        <td>개발 브랜치 확인</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge risk">검수</span></td>
+                        <td>업무 케이스 검증 중</td>
+                        <td>테스트 데이터 확인</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge mvp">완료</span></td>
+                        <td>업무 흐름에서 사용 가능</td>
+                        <td>다음 도메인 연결 가능</td>
+                      </tr>
+                      <tr>
+                        <td><span class="badge later">보류</span></td>
+                        <td>정책/외부정보 미확정</td>
+                        <td>의사결정 필요</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
+              </div>
+            </section>
+
+            <section id="docs" class="view">
+              <div class="docs-layout">
+                <aside class="panel doc-list" id="docList"></aside>
+                <article class="panel">
+                  <div class="doc-toolbar">
+                    <strong id="docTitle">문서 선택</strong>
+                    <a id="rawLink" href="#" target="_blank" rel="noreferrer"
+                      >원본 md</a
+                    >
+                  </div>
+                  <div id="markdown" class="markdown empty">
+                    왼쪽에서 문서를 선택하면 Markdown과 Mermaid가 웹 화면으로
+                    렌더링됩니다.
+                  </div>
+                </article>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const docs = [
+      ["EMR_Workflow_Guide.md", "전체 Workflow"],
+      ["EMR_Beginner_Guide.md", "입문 가이드"],
+      ["EMR_Development_Guide.md", "개발 가이드"],
+        ["EMR_Data_Domain_Map.md", "도메인 맵"],
+        ["Base_Code_Domain.md", "기초코드"],
+        ["Reception_Domain.md", "환자/접수"],
+        ["Confirm_Examinee_Domain.md", "수진자조회"],
+        ["Treatment_Prescription_Domain.md", "진료/처방"],
+        ["Patient_Cost_Domain.md", "진료비 계산"],
+        ["Receive_Pay_Domain.md", "수납"],
+        ["Report_Output_Domain.md", "출력물"],
+        ["DUR_Domain.md", "DUR"],
+        ["SAM_Claim_File_Domain.md", "SAM 청구"],
+        ["Narcotics_NIMS_Domain.md", "마약류 NIMS"],
+        ["Claim_Software_Certification_Checklist.md", "청구SW 인증"],
+        ["Claim_Software_Certification_Casebook.md", "인증 사례집"],
+      ];
+
+      const tabButtons = document.querySelectorAll(".tab");
+      const views = document.querySelectorAll(".view");
+      const markdownEl = document.getElementById("markdown");
+      const docTitle = document.getElementById("docTitle");
+      const rawLink = document.getElementById("rawLink");
+      const docList = document.getElementById("docList");
+      let milestoneTimeline = null;
+      let activeDoc = null;
+
+      marked.setOptions({ gfm: true, breaks: false });
+
+      tabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          tabButtons.forEach((item) => item.classList.remove("active"));
+          views.forEach((view) => view.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(button.dataset.view).classList.add("active");
+          if (button.dataset.view === "milestone") {
+            initMilestoneTimeline();
+          }
+          if (button.dataset.view === "docs") {
+            loadDefaultDoc();
+          }
+        });
+      });
+
+      function initMilestoneTimeline() {
+        if (milestoneTimeline || !window.vis) return;
+
+        const container = document.getElementById("milestoneTimeline");
+        if (!container) return;
+
+        const groups = new vis.DataSet([
+          { id: "base", content: "기반" },
+          { id: "mvp", content: "MVP" },
+          { id: "integration", content: "연동" },
+          { id: "claim", content: "청구" },
+          { id: "report", content: "보고/운영" },
+          { id: "week", content: "주간 Sprint" },
+          { id: "gate", content: "검수 Gate" },
+        ]);
+
+        const items = new vis.DataSet([
+          {
+            id: 1,
+            group: "base",
+            content: "기초코드/병원설정",
+            start: "2026-08-10",
+            end: "2026-08-21",
+            className: "base",
+            title: "공통코드, 병원설정, 사용자/진료실, 처방 마스터 공통 구조",
+          },
+          {
+            id: 2,
+            group: "base",
+            content: "환자/접수/자격조회",
+            start: "2026-08-24",
+            end: "2026-09-04",
+            className: "base",
+            title: "환자/고객관리, 보험이력, 접수/대기, 수진자조회 결과 저장",
+          },
+          {
+            id: 3,
+            group: "mvp",
+            content: "진료/상병",
+            start: "2026-09-07",
+            end: "2026-09-18",
+            className: "mvp",
+            title: "진료 생성, 상병, 주상병, 특정기호, 의료급여 진료확인",
+          },
+          {
+            id: 4,
+            group: "mvp",
+            content: "처방/묶음/단가판정",
+            start: "2026-09-21",
+            end: "2026-10-02",
+            className: "mvp",
+            title:
+              "수가/약품/재료/묶음 처방, 진료일 기준 급여/비급여/단가 판정",
+          },
+          {
+            id: 5,
+            group: "mvp",
+            content: "계산/수납",
+            start: "2026-10-05",
+            end: "2026-10-16",
+            className: "mvp",
+            title: "본인부담, 산정특례, 지원금, 수납대기, 결제, 환불, 미수",
+          },
+          {
+            id: 6,
+            group: "mvp",
+            content: "출력/마감/MVP 검수",
+            start: "2026-10-19",
+            end: "2026-10-30",
+            className: "mvp",
+            title: "처방전, 영수증, 세부산정내역, 제증명, 마감, MVP 통합 검수",
+          },
+          {
+            id: 7,
+            group: "integration",
+            content: "DUR/의료쇼핑",
+            start: "2026-11-02",
+            end: "2026-11-13",
+            className: "integration",
+            title: "DUR 요청/결과/취소, 특정내역, 마약류 의료쇼핑 방지",
+          },
+          {
+            id: 8,
+            group: "claim",
+            content: "SAM IN 생성",
+            start: "2026-11-09",
+            end: "2026-11-20",
+            className: "claim",
+            title:
+              "건강보험/의료급여 분리, 청구서/명세서/상병/처방/특정내역 파일 생성",
+          },
+          {
+            id: 9,
+            group: "claim",
+            content: "SAM OUT/심사결과",
+            start: "2026-11-23",
+            end: "2026-11-27",
+            className: "claim",
+            title: "접수/반송, 심사결과, 조정/삭감, 보완/누락/재청구",
+          },
+          {
+            id: 10,
+            group: "report",
+            content: "NIMS 신고",
+            start: "2026-11-30",
+            end: "2026-12-18",
+            className: "report",
+            title: "NIMS 기준정보, 구매, 투약, 조제, 결과/취소/변경",
+          },
+          {
+            id: 11,
+            group: "report",
+            content: "비급여 보고/운영 리허설",
+            start: "2026-12-21",
+            end: "2027-01-08",
+            className: "report",
+            title:
+              "비급여 보고 대상 추출, 자료 검증, 권한/로그/감사, 운영 리허설",
+          },
+          {
+            id: 101,
+            group: "week",
+            content: "W1 병원/공통코드",
+            start: "2026-08-10",
+            end: "2026-08-14",
+            className: "base",
+            title: "요양기관 설정, 공통코드, 사용자/진료실",
+          },
+          {
+            id: 102,
+            group: "week",
+            content: "W2 처방 기준코드",
+            start: "2026-08-17",
+            end: "2026-08-21",
+            className: "base",
+            title: "상병, 수가, 약품, 재료, 적용일자",
+          },
+          {
+            id: 103,
+            group: "week",
+            content: "W3 환자/고객",
+            start: "2026-08-24",
+            end: "2026-08-28",
+            className: "base",
+            title: "환자 식별, 고객관리, 중복 방지",
+          },
+          {
+            id: 104,
+            group: "week",
+            content: "W4 접수/자격",
+            start: "2026-08-31",
+            end: "2026-09-04",
+            className: "base",
+            title: "접수, 대기열, 보험이력, 수진자조회",
+          },
+          {
+            id: 105,
+            group: "week",
+            content: "W5 진료/상병",
+            start: "2026-09-07",
+            end: "2026-09-11",
+            className: "mvp",
+            title: "진료 생성, 주상병, 특정기호",
+          },
+          {
+            id: 106,
+            group: "week",
+            content: "W6 처방 라인",
+            start: "2026-09-14",
+            end: "2026-09-18",
+            className: "mvp",
+            title: "수가/약품/재료, 원내외, 항목코드",
+          },
+          {
+            id: 107,
+            group: "week",
+            content: "W7 묶음/반복",
+            start: "2026-09-21",
+            end: "2026-09-25",
+            className: "mvp",
+            title: "묶음처방, 과거진료 복사, 현재 기준 재판정",
+          },
+          {
+            id: 108,
+            group: "week",
+            content: "W8 진료 검수",
+            start: "2026-09-28",
+            end: "2026-10-02",
+            className: "mvp",
+            title: "진료 저장, 의료급여 승인, DUR 대상 추출 준비",
+          },
+          {
+            id: 109,
+            group: "week",
+            content: "W9 본인부담",
+            start: "2026-10-05",
+            end: "2026-10-09",
+            className: "mvp",
+            title: "건강보험, 의료급여, 일반, 산정특례 계산",
+          },
+          {
+            id: 110,
+            group: "week",
+            content: "W10 수납/환불",
+            start: "2026-10-12",
+            end: "2026-10-16",
+            className: "mvp",
+            title: "결제수단, 복합결제, 부분수납, 환불, 미수",
+          },
+          {
+            id: 111,
+            group: "week",
+            content: "W11 출력물",
+            start: "2026-10-19",
+            end: "2026-10-23",
+            className: "mvp",
+            title: "처방전, 영수증, 세부산정내역, 제증명",
+          },
+          {
+            id: 112,
+            group: "week",
+            content: "W12 MVP 검수",
+            start: "2026-10-26",
+            end: "2026-10-30",
+            className: "mvp",
+            title: "접수-진료-계산-수납-마감 통합 검수",
+          },
+          {
+            id: 113,
+            group: "week",
+            content: "W13 DUR 요청",
+            start: "2026-11-02",
+            end: "2026-11-06",
+            className: "integration",
+            title: "DUR 대상 추출, 원내/원외 분리, 요청 전문",
+          },
+          {
+            id: 114,
+            group: "week",
+            content: "W14 DUR 결과",
+            start: "2026-11-09",
+            end: "2026-11-13",
+            className: "integration",
+            title: "결과 저장, 특정내역, 취소, 의료쇼핑 방지",
+          },
+          {
+            id: 115,
+            group: "week",
+            content: "W15 SAM IN",
+            start: "2026-11-16",
+            end: "2026-11-20",
+            className: "claim",
+            title: "건강보험/의료급여 청구 파일 생성",
+          },
+          {
+            id: 116,
+            group: "week",
+            content: "W16 SAM OUT",
+            start: "2026-11-23",
+            end: "2026-11-27",
+            className: "claim",
+            title: "접수/반송, 심사결과, 재청구 근거",
+          },
+          {
+            id: 117,
+            group: "week",
+            content: "W17 NIMS 기준",
+            start: "2026-11-30",
+            end: "2026-12-04",
+            className: "report",
+            title: "거래처, 저장소, 제품, 재고, 바코드",
+          },
+          {
+            id: 118,
+            group: "week",
+            content: "W18 구매보고",
+            start: "2026-12-07",
+            end: "2026-12-11",
+            className: "report",
+            title: "마약류 구매보고, 결과, 재고 증가",
+          },
+          {
+            id: 119,
+            group: "week",
+            content: "W19 투약/조제",
+            start: "2026-12-14",
+            end: "2026-12-18",
+            className: "report",
+            title: "진료 처방 기반 투약/조제 보고",
+          },
+          {
+            id: 120,
+            group: "week",
+            content: "W20 비급여보고",
+            start: "2026-12-21",
+            end: "2026-12-25",
+            className: "report",
+            title: "비급여 보고 대상 추출과 자료 검증",
+          },
+          {
+            id: 121,
+            group: "week",
+            content: "W21 운영/로그",
+            start: "2026-12-28",
+            end: "2027-01-01",
+            className: "report",
+            title: "권한, 감사 로그, 마감 후 수정, 백업",
+          },
+          {
+            id: 122,
+            group: "week",
+            content: "W22 최종 리허설",
+            start: "2027-01-04",
+            end: "2027-01-08",
+            className: "gate",
+            title: "오픈 리허설, 교육, 전체 회귀 테스트",
+          },
+          {
+            id: 12,
+            group: "gate",
+            content: "Gate 1",
+            start: "2026-09-04",
+            type: "point",
+            className: "gate",
+            title: "기초/접수 기반 승인",
+          },
+          {
+            id: 13,
+            group: "gate",
+            content: "Gate 2",
+            start: "2026-10-02",
+            type: "point",
+            className: "gate",
+            title: "진료/처방 MVP 승인",
+          },
+          {
+            id: 14,
+            group: "gate",
+            content: "Gate 3",
+            start: "2026-10-30",
+            type: "point",
+            className: "gate",
+            title: "계산/수납 MVP 승인",
+          },
+          {
+            id: 15,
+            group: "gate",
+            content: "Gate 4",
+            start: "2026-11-27",
+            type: "point",
+            className: "gate",
+            title: "청구/DUR 승인",
+          },
+          {
+            id: 16,
+            group: "gate",
+            content: "Final",
+            start: "2027-01-08",
+            type: "point",
+            className: "gate",
+            title: "NIMS/비급여/운영 검수",
+          },
+        ]);
+
+        milestoneTimeline = new vis.Timeline(container, items, groups, {
+          stack: false,
+          horizontalScroll: true,
+          zoomKey: "ctrlKey",
+          orientation: "top",
+          margin: { item: 12, axis: 10 },
+          start: "2026-08-05",
+          end: "2027-01-15",
+          min: "2026-08-01",
+          max: "2027-01-31",
+          locale: "ko",
+          tooltip: { followMouse: true, overflowMethod: "cap" },
+        });
+      }
+
+      docs.forEach(([file, label], index) => {
+        const button = document.createElement("button");
+        button.textContent = label;
+        button.title = file;
+        button.dataset.file = file;
+        button.addEventListener("click", () => loadDoc(file, label, button));
+        docList.appendChild(button);
+        if (index === 0) button.classList.add("active");
+      });
+
+      function loadDefaultDoc() {
+        if (activeDoc) return;
+        const first = docList.querySelector("button");
+        if (first) loadDoc(first.dataset.file, docs[0][1], first);
+      }
+
+      async function loadDoc(file, label, activeButton) {
+        activeDoc = file;
+        docList
+          .querySelectorAll("button")
+          .forEach((button) => button.classList.remove("active"));
+        activeButton.classList.add("active");
+        docTitle.textContent = label;
+        rawLink.href = file;
+        markdownEl.className = "markdown";
+        markdownEl.textContent = "문서를 불러오는 중입니다.";
+
+        try {
+          const response = await fetch(file, { cache: "no-store" });
+          if (!response.ok)
+            throw new Error(response.status + " " + response.statusText);
+          const markdown = await response.text();
+          const html = DOMPurify.sanitize(marked.parse(markdown));
+          markdownEl.innerHTML = html;
+          await renderMermaid(markdownEl);
+        } catch (error) {
+          activeDoc = null;
+          markdownEl.className = "markdown empty";
+          if (window.location.protocol === "file:") {
+            markdownEl.innerHTML =
+              "문서를 불러오지 못했습니다. 이 HTML은 <b>HTTP 서버</b>로 열어야 Markdown 파일을 읽을 수 있습니다.";
+          } else {
+            markdownEl.textContent =
+              "문서를 불러오지 못했습니다. 잠시 후 다시 선택해 주세요.";
+          }
+          console.error(error);
+        }
+      }
+
+      async function renderMermaid(root) {
+        const blocks = root.querySelectorAll(
+          "pre code.language-mermaid, pre code.lang-mermaid",
+        );
+        blocks.forEach((code, index) => {
+          const div = document.createElement("div");
+          div.className = "mermaid";
+          div.textContent = code.textContent;
+          div.id = "md-mermaid-" + Date.now() + "-" + index;
+          code.closest("pre").replaceWith(div);
+        });
+
+        if (window.mermaid) {
+          await window.mermaid.run({
+            nodes: root.querySelectorAll(".mermaid"),
+          });
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", async () => {
+        if (window.mermaid) {
+          await window.mermaid.run({
+            nodes: document.querySelectorAll(".mermaid"),
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
