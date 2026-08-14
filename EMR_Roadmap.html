@@ -697,6 +697,75 @@
         border-color: var(--blue);
       }
 
+      .doc-search {
+        margin-bottom: 12px;
+      }
+
+      .doc-search input {
+        width: 100%;
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0 11px;
+        font: inherit;
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .doc-search input:focus {
+        outline: 2px solid #b8dbff;
+        border-color: #6bb3f4;
+      }
+
+      .search-status {
+        margin: 8px 2px 0;
+        color: var(--muted);
+        font-size: 12px;
+        min-height: 18px;
+      }
+
+      .search-results {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+
+      .search-result {
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        display: block;
+        text-align: left;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .search-result strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #0f6fc7;
+        font-size: 13px;
+      }
+
+      .search-result span {
+        display: block;
+        color: #4a5563;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.45;
+      }
+
+      .search-result mark,
+      .markdown mark {
+        background: #fff2a8;
+        color: inherit;
+        padding: 1px 2px;
+        border-radius: 3px;
+      }
+
       .doc-toolbar {
         display: flex;
         justify-content: space-between;
@@ -1637,7 +1706,21 @@ flowchart LR
 
             <section id="docs" class="view">
               <div class="docs-layout">
-                <aside class="panel doc-list" id="docList"></aside>
+                <aside class="panel doc-list">
+                  <div class="doc-search">
+                    <input
+                      id="docSearchInput"
+                      type="search"
+                      placeholder="문서 전체 검색..."
+                      autocomplete="off"
+                    />
+                    <div id="searchStatus" class="search-status">
+                      검색어를 입력하세요.
+                    </div>
+                  </div>
+                  <div id="searchResults" class="search-results"></div>
+                  <div id="docList"></div>
+                </aside>
                 <article class="panel">
                   <div class="doc-toolbar">
                     <strong id="docTitle">문서 선택</strong>
@@ -1683,6 +1766,11 @@ flowchart LR
       const docTitle = document.getElementById("docTitle");
       const rawLink = document.getElementById("rawLink");
       const docList = document.getElementById("docList");
+      const docSearchInput = document.getElementById("docSearchInput");
+      const searchResults = document.getElementById("searchResults");
+      const searchStatus = document.getElementById("searchStatus");
+      const docCache = new Map();
+      let searchTimer = null;
       let milestoneTimeline = null;
       let activeDoc = null;
 
@@ -2092,31 +2180,49 @@ flowchart LR
         if (index === 0) button.classList.add("active");
       });
 
+      docSearchInput.addEventListener("input", () => {
+        window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(runDocSearch, 180);
+      });
+
       function loadDefaultDoc() {
         if (activeDoc) return;
         const first = docList.querySelector("button");
         if (first) loadDoc(first.dataset.file, docs[0][1], first);
       }
 
-      async function loadDoc(file, label, activeButton) {
+      async function getDocMarkdown(file) {
+        if (docCache.has(file)) return docCache.get(file);
+
+        const response = await fetch(file, { cache: "no-store" });
+        if (!response.ok)
+          throw new Error(response.status + " " + response.statusText);
+
+        const markdown = await response.text();
+        docCache.set(file, markdown);
+        return markdown;
+      }
+
+      async function loadDoc(file, label, activeButton, highlightTerm = "") {
         activeDoc = file;
         docList
           .querySelectorAll("button")
           .forEach((button) => button.classList.remove("active"));
-        activeButton.classList.add("active");
+        if (activeButton) activeButton.classList.add("active");
         docTitle.textContent = label;
         rawLink.href = file;
         markdownEl.className = "markdown";
         markdownEl.textContent = "문서를 불러오는 중입니다.";
 
         try {
-          const response = await fetch(file, { cache: "no-store" });
-          if (!response.ok)
-            throw new Error(response.status + " " + response.statusText);
-          const markdown = await response.text();
+          const markdown = await getDocMarkdown(file);
           const html = DOMPurify.sanitize(marked.parse(markdown));
           markdownEl.innerHTML = html;
           await renderMermaid(markdownEl);
+          if (highlightTerm) {
+            highlightInMarkdown(highlightTerm);
+            scrollToFirstHighlight();
+          }
         } catch (error) {
           activeDoc = null;
           markdownEl.className = "markdown empty";
@@ -2129,6 +2235,183 @@ flowchart LR
           }
           console.error(error);
         }
+      }
+
+      async function runDocSearch() {
+        const query = docSearchInput.value.trim();
+        searchResults.innerHTML = "";
+
+        if (!query) {
+          searchStatus.textContent = "검색어를 입력하세요.";
+          clearHighlights(markdownEl);
+          return;
+        }
+
+        searchStatus.textContent = "검색 중입니다...";
+
+        try {
+          const results = [];
+          for (const [file, label] of docs) {
+            const markdown = await getDocMarkdown(file);
+            results.push(...findDocMatches(markdown, file, label, query));
+          }
+
+          renderSearchResults(results, query);
+        } catch (error) {
+          searchStatus.textContent =
+            window.location.protocol === "file:"
+              ? "검색은 HTTP 서버로 열었을 때 사용할 수 있습니다."
+              : "검색 중 문서를 읽지 못했습니다.";
+          console.error(error);
+        }
+      }
+
+      function findDocMatches(markdown, file, label, query) {
+        const lowerText = markdown.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        const matches = [];
+        let fromIndex = 0;
+
+        while (matches.length < 3) {
+          const index = lowerText.indexOf(lowerQuery, fromIndex);
+          if (index === -1) break;
+
+          matches.push({
+            file,
+            label,
+            index,
+            snippet: makeSnippet(markdown, index, query.length),
+          });
+          fromIndex = index + lowerQuery.length;
+        }
+
+        return matches;
+      }
+
+      function renderSearchResults(results, query) {
+        if (!results.length) {
+          searchStatus.textContent = "검색 결과가 없습니다.";
+          return;
+        }
+
+        searchStatus.textContent = `${results.length}건 검색됨`;
+        const fragment = document.createDocumentFragment();
+
+        results.slice(0, 30).forEach((result) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "search-result";
+          button.innerHTML = `<strong>${escapeHtml(
+            result.label
+          )}</strong><span>${highlightSnippet(
+            result.snippet,
+            query
+          )}</span>`;
+          button.addEventListener("click", () => {
+            const docButton = Array.from(docList.querySelectorAll("button")).find(
+              (item) => item.dataset.file === result.file
+            );
+            loadDoc(result.file, result.label, docButton, query);
+          });
+          fragment.appendChild(button);
+        });
+
+        searchResults.appendChild(fragment);
+      }
+
+      function makeSnippet(markdown, index, queryLength) {
+        const start = Math.max(0, index - 70);
+        const end = Math.min(markdown.length, index + queryLength + 90);
+        const prefix = start > 0 ? "... " : "";
+        const suffix = end < markdown.length ? " ..." : "";
+        return (
+          prefix +
+          markdown
+            .slice(start, end)
+            .replace(/[`*_>#|[\](){}]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim() +
+          suffix
+        );
+      }
+
+      function highlightInMarkdown(term) {
+        clearHighlights(markdownEl);
+        if (!term) return;
+
+        const regex = new RegExp(escapeRegExp(term), "gi");
+        const skipTags = new Set(["SCRIPT", "STYLE", "TEXTAREA", "PRE", "CODE"]);
+        const walker = document.createTreeWalker(
+          markdownEl,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+              if (skipTags.has(node.parentElement?.tagName))
+                return NodeFilter.FILTER_REJECT;
+              regex.lastIndex = 0;
+              return regex.test(node.nodeValue)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_REJECT;
+            },
+          }
+        );
+        const nodes = [];
+
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach((node) => {
+          regex.lastIndex = 0;
+          const fragment = document.createDocumentFragment();
+          let lastIndex = 0;
+          node.nodeValue.replace(regex, (match, offset) => {
+            fragment.appendChild(
+              document.createTextNode(node.nodeValue.slice(lastIndex, offset))
+            );
+            const mark = document.createElement("mark");
+            mark.textContent = match;
+            fragment.appendChild(mark);
+            lastIndex = offset + match.length;
+          });
+          fragment.appendChild(document.createTextNode(node.nodeValue.slice(lastIndex)));
+          node.parentNode.replaceChild(fragment, node);
+        });
+      }
+
+      function clearHighlights(root) {
+        root.querySelectorAll("mark").forEach((mark) => {
+          mark.replaceWith(document.createTextNode(mark.textContent));
+        });
+        root.normalize();
+      }
+
+      function scrollToFirstHighlight() {
+        const first = markdownEl.querySelector("mark");
+        if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (char) => {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          }[char];
+        });
+      }
+
+      function highlightSnippet(snippet, query) {
+        const regex = new RegExp(escapeRegExp(query), "gi");
+        return escapeHtml(snippet).replace(
+          regex,
+          (match) => `<mark>${escapeHtml(match)}</mark>`
+        );
       }
 
       async function renderMermaid(root) {
