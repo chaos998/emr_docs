@@ -835,6 +835,53 @@
       .markdown table {
         margin: 14px 0 22px;
       }
+
+      .markdown img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 14px 0 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .screen-tabs {
+        position: sticky;
+        top: 61px;
+        z-index: 5;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 0 -28px 20px;
+        padding: 12px 28px;
+        background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(10px);
+      }
+
+      .screen-tabs button {
+        height: 34px;
+        border: 1px solid #dbe3ec;
+        background: #fff;
+        color: #4b5563;
+        font-size: 13px;
+      }
+
+      .screen-tabs button.active {
+        border-color: #b9d9f5;
+        background: #eaf5ff;
+        color: #0f6fc7;
+      }
+
+      .screen-section {
+        display: none;
+      }
+
+      .screen-section.active {
+        display: block;
+      }
+
       .markdown blockquote {
         border-left: 4px solid var(--blue);
         margin: 16px 0;
@@ -1744,6 +1791,9 @@ flowchart LR
       const docs = [
       ["EMR_Workflow_Guide.md", "전체 Workflow"],
       ["EMR_Beginner_Guide.md", "입문 가이드"],
+      ["Screen_UI_Requirement.md", "화면별 개발 요구사항"],
+      ["Base_Code_UI_Requirement.md", "기초자료 화면 요구사항"],
+      ["Reception_Payment_UI_Requirement.md", "접수/수납 화면 요구사항"],
       ["EMR_Development_Guide.md", "개발 가이드"],
         ["EMR_Data_Domain_Map.md", "도메인 맵"],
         ["Base_Code_Domain.md", "기초코드"],
@@ -2221,8 +2271,10 @@ flowchart LR
           const html = DOMPurify.sanitize(marked.parse(markdown));
           markdownEl.innerHTML = html;
           await renderMermaid(markdownEl);
+          buildScreenTabs(file);
           if (highlightTerm) {
             highlightInMarkdown(highlightTerm);
+            activateSectionWithFirstHighlight();
             scrollToFirstHighlight();
           }
         } catch (error) {
@@ -2390,6 +2442,60 @@ flowchart LR
       function scrollToFirstHighlight() {
         const first = markdownEl.querySelector("mark");
         if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+
+      function buildScreenTabs(file) {
+        if (!["Screen_UI_Requirement.md", "Base_Code_UI_Requirement.md", "Reception_Payment_UI_Requirement.md"].includes(file)) return;
+
+        const headings = Array.from(markdownEl.querySelectorAll("h2"));
+        if (headings.length <= 1) return;
+
+        const nav = document.createElement("div");
+        nav.className = "screen-tabs";
+
+        headings.forEach((heading, index) => {
+          const section = document.createElement("section");
+          section.className = "screen-section";
+          section.dataset.screenIndex = String(index);
+          if (index === 0) section.classList.add("active");
+
+          heading.parentNode.insertBefore(section, heading);
+          let node = heading;
+          while (node) {
+            const next = node.nextSibling;
+            section.appendChild(node);
+            if (next && next.nodeType === Node.ELEMENT_NODE && next.tagName === "H2") {
+              break;
+            }
+            node = next;
+          }
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = heading.textContent.replace(/^\d+\.\s*/, "");
+          if (index === 0) button.classList.add("active");
+          button.addEventListener("click", () => activateScreenSection(index));
+          nav.appendChild(button);
+        });
+
+        const firstSection = markdownEl.querySelector(".screen-section");
+        if (firstSection) markdownEl.insertBefore(nav, firstSection);
+      }
+
+      function activateScreenSection(index) {
+        markdownEl.querySelectorAll(".screen-section").forEach((section) => {
+          section.classList.toggle("active", section.dataset.screenIndex === String(index));
+        });
+        markdownEl.querySelectorAll(".screen-tabs button").forEach((button, buttonIndex) => {
+          button.classList.toggle("active", buttonIndex === index);
+        });
+      }
+
+      function activateSectionWithFirstHighlight() {
+        const first = markdownEl.querySelector("mark");
+        const section = first?.closest(".screen-section");
+        if (!section) return;
+        activateScreenSection(Number(section.dataset.screenIndex));
       }
 
       function escapeRegExp(value) {
